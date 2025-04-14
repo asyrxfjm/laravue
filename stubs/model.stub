@@ -1,0 +1,26 @@
+<?php
+
+namespace {{ namespace }};
+
+{{ factoryImport }}
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
+
+class {{ class }} extends Model
+{
+    {{ factory }}
+
+    /**
+     * Boot the model.
+     *
+     * Listen for the creating event and set a unique identifier on the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->uniqueKey = Str::ulid();
+        });
+    }
+}
