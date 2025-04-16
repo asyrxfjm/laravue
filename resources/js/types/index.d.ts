@@ -26,14 +26,26 @@ export interface SharedData extends PageProps {
     sidebarOpen: boolean;
 }
 
-export interface User {
-    id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-    email_verified_at: string | null;
-    created_at: string;
-    updated_at: string;
-}
+export type PaginateMeta<T> = {
+    current_page: number;
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: Link[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
+    data: T[];
+};
+
+export type Link = {
+    url: string;
+    label: string;
+    active: boolean;
+};
 
 export type BreadcrumbItemType = BreadcrumbItem;
