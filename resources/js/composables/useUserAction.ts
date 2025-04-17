@@ -8,19 +8,30 @@ export const useUserAction = () => {
             z.object({
                 name: z.string().min(2).max(50),
                 email: z.string().email().min(6).max(50),
+                roles: z.array(z.string()),
             }),
         );
 
-        const form = (body: IUserAction) => {
-            return useForm({
-                name: body.name,
-                email: body.email,
-            });
+        const form = useForm<{
+            name: string;
+            email: string;
+            roles: string[];
+        }>({
+            name: '',
+            email: '',
+            roles: [],
+        });
+
+        const set = (body: IUserAction) => {
+            form.name = body.name;
+            form.email = body.email;
+            form.roles = body.roles;
         };
 
         return {
             schema,
             form,
+            set,
         };
     };
 
@@ -32,4 +43,5 @@ export const useUserAction = () => {
 export interface IUserAction {
     name: string;
     email: string;
+    roles: string[];
 }

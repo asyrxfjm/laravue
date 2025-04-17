@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,22 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'avatar' => '',
         ];
+    }
+
+    /**
+     * Assign the user as a user.
+     */
+    public function user(): self
+    {
+        return $this->assignRole('User');
+    }
+
+    /**
+     * @param  array|\Spatie\Permission\Contracts\Role|string  ...$roles
+     */
+    private function assignRole(...$roles): self
+    {
+        return $this->afterCreating(fn (User $user) => $user->syncRoles($roles));
     }
 
     /**

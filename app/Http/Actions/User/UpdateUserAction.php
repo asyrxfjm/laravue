@@ -11,6 +11,9 @@ class UpdateUserAction
     {
         $user->name = $data->name;
         $user->email = $data->email;
+        $user->syncRoles(
+            collect($data->roles)->pluck('name')->toArray()
+        );
         $user->save();
     }
 }

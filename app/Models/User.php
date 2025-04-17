@@ -54,7 +54,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>`
+     * @var list<string>
      */
     protected $hidden = [
         'workos_id',

@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Actions\User\UpdateUserAction;
+use App\Http\DTOs\RoleData;
 use App\Http\DTOs\UserData;
 use App\Http\Pipelines\User\Filters\EmailFilter;
 use App\Http\Pipelines\User\Filters\NameFilter;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pipeline\Pipeline;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -21,7 +24,7 @@ class UserController extends Controller
     {
         return Inertia::render('users/Index', [
             'users' => app(Pipeline::class)
-                ->send(User::query())
+                ->send(User::query()->with('roles'))
                 ->through([
                     NameFilter::class,
                     EmailFilter::class,
@@ -29,6 +32,7 @@ class UserController extends Controller
                 ->thenReturn()
                 ->paginate(10)
                 ->withQueryString(),
+            'roles' => Role::all(),
             'filters' => request()->all(),
         ]);
     }
@@ -46,8 +50,22 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UserData $data, User $user, UpdateUserAction $action): RedirectResponse
+    public function update(UserRequest $request, User $user, UpdateUserAction $action): RedirectResponse
     {
+        $roles = [];
+
+        foreach ($request->validated('roles') as $role) {
+            $roles[] = [
+                'name' => $role,
+            ];
+        }
+
+        $data = UserData::from([
+            'name' => $request->validated('name'),
+            'email' => $request->validated('email'),
+            'roles' => RoleData::collect($roles),
+        ]);
+
         try {
             $action->handle($data, $user);
 

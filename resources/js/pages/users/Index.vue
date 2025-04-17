@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Pagination from '@/components/Pagination.vue';
 import Search from '@/components/Search.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUserAction } from '@/composables/useUserAction';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -36,6 +38,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const props = withDefaults(
     defineProps<{
         users: PaginateMeta<App.Http.DTOs.UserData>;
+        roles: App.Http.DTOs.RoleData[];
         filters: {
             name: string;
             email: string;
@@ -73,7 +76,7 @@ const openDeleteModal = ref(false);
 
 const action = useUserAction();
 const updateAction = action._update();
-
+const updateForm = updateAction.form;
 const form = useForm({
     validationSchema: updateAction.schema,
 });
@@ -85,6 +88,7 @@ const selectUser = (user: App.Http.DTOs.UserData, type: 'delete' | 'update') => 
     form.setValues({
         name: user.name,
         email: user.email,
+        roles: user.roles!.map((role) => role.name!),
     });
 };
 
@@ -94,7 +98,9 @@ type FormFields = {
 };
 
 const onSubmitUpdateForm = form.handleSubmit((values) => {
-    updateAction.form(values).put(
+    updateAction.set(values);
+
+    updateForm.put(
         route('users.update', {
             user: selectedUser.value.id,
         }),
@@ -148,19 +154,27 @@ const onSubmitDeleteForm = () => {
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead class="max-w-[100px]">Role</TableHead>
                             <TableHead>Created At</TableHead>
                             <TableHead class="w-0 text-right">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow v-for="user in users.data" :key="user.id">
+                        <TableRow v-for="user in users.data" :key="user.id!">
                             <TableCell>{{ user.name }}</TableCell>
                             <TableCell>{{ user.email }}</TableCell>
+                            <TableCell class="max-w-[100px]">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <Badge v-for="role in user.roles" :key="role.id!" variant="secondary">
+                                        {{ role.name }}
+                                    </Badge>
+                                </div>
+                            </TableCell>
                             <TableCell>{{ dateFormatter(user.created_at) }}</TableCell>
                             <TableCell class="text-right">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger>
-                                        <Button variant="ghost" size="icon">
+                                        <Button variant="outline" size="icon">
                                             <Ellipsis class="size-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -235,10 +249,26 @@ const onSubmitDeleteForm = () => {
                             <FormMessage />
                         </FormItem>
                     </FormField>
+                    <FormField v-slot="{ componentField }" name="roles">
+                        <FormItem>
+                            <FormLabel>Roles</FormLabel>
+                            <Select v-bind="componentField" :multiple="true">
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a role " />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem v-for="role in roles" :key="role.id!" :value="role.name"> {{ role.name }} </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
                 </div>
                 <DialogFooter>
-                    <Button type="button" variant="outline" @click="openUpdateModal = false">Cancel</Button>
-                    <Button @click="onSubmitUpdateForm">Save</Button>
+                    <Button type="button" variant="outline" @click="openUpdateModal = false"> Cancel </Button>
+                    <Button @click="onSubmitUpdateForm" :loading="updateForm.processing">Save</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
